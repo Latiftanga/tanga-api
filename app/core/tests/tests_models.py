@@ -23,7 +23,6 @@ class ModelTests(TestCase):
         self.assertEqual(user.id, id)
         self.assertTrue(user.check_password(password))
 
-
     def test_new_user_without_id_raises_error(self):
         """Test that creating a user without id raises error"""
         with self.assertRaises(ValueError):
