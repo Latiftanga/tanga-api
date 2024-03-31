@@ -10,13 +10,13 @@ class AdminsiteTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.admin_user = get_user_model().objects.create_superuser(
-            email='super@example.com',
+            id='SU01',
             password='test@pass123'
         )
 
         self.client.force_login(self.admin_user)
         self.user = get_user_model().objects.create_user(
-            email='user@example.com',
+            id='USR01',
             password='test@pass123'
         )
 
@@ -25,7 +25,7 @@ class AdminsiteTests(TestCase):
         url = reverse('admin:core_user_changelist')
         res = self.client.get(url)
 
-        self.assertContains(res, self.user.email)
+        self.assertContains(res, self.user.id)
 
     def test_edit_admin_user_page(self):
         """Test user edit page works."""
