@@ -11,18 +11,18 @@ from rest_framework import serializers
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token"""
-    id = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField(
         style={'input_type': 'password'}
     )
 
     def validate(self, attrs):
         """Validates and authenticated users"""
-        id = attrs.get('id')
+        email = attrs.get('email')
         password = attrs.get('password')
         user = authenticate(
             request=self.context.get('request'),
-            id=id,
+            email=email,
             password=password
         )
         if not user:
@@ -37,7 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['id', 'password']
+        fields = ['email', 'password']
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 5}
         }

@@ -18,13 +18,13 @@ class PublicUserAPITests(TestCase):
     def test_create_token(self):
         """Test generate token for valid credentials"""
         user_details = {
-            'id': 'USR01',
+            'email': 'email@eg.com',
             'password': 'test@pass123'
         }
         get_user_model().objects.create_user(**user_details)
 
         payload = {
-            'id': user_details['id'],
+            'email': user_details['email'],
             'password': user_details['password']
         }
         res = self.client.post(TOKEN_URL, payload)
@@ -33,7 +33,7 @@ class PublicUserAPITests(TestCase):
 
     def test_create_bad_credentials(self):
         """Test reuturn error if credentials are bad"""
-        payload = {'id': '', 'password': 'badpass'}
+        payload = {'email': '', 'password': 'badpass'}
         res = self.client.post(TOKEN_URL, payload)
 
         self.assertNotIn('token', res.data)
@@ -41,7 +41,7 @@ class PublicUserAPITests(TestCase):
 
     def test_create_token_blank_password(self):
         """Test posting a blank password returns error"""
-        payload = {'id': 'USER01', 'password': ''}
+        payload = {'email': 'USER01', 'password': ''}
         res = self.client.post(TOKEN_URL, payload)
 
         self.assertNotIn('token', res.data)
@@ -57,7 +57,7 @@ class PrivateUserAPITests(TestCase):
     """Test API request that require authentication"""
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            id='USER01',
+            email='example@eg.com',
             password='test@pass'
         )
         self.client = APIClient()
@@ -68,7 +68,7 @@ class PrivateUserAPITests(TestCase):
         res = self.client.get(ME_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, {'id': self.user.id})
+        self.assertEqual(res.data, {'email': self.user.mail})
 
     def test_post_me_not_allowed(self):
         """Test POST method not allowed for the me endpoint"""
@@ -78,9 +78,9 @@ class PrivateUserAPITests(TestCase):
 
     def test_update_user_profile(self):
         """Test updating the user profile for authenticated user"""
-        payload = {'id': 'USER01', 'password': 'test@pass'}
+        payload = {'email': 'user@eg.com', 'password': 'test@pass'}
         res = self.client.patch(ME_URL, payload)
 
         self.user.refresh_from_db()
-        self.assertEqual(self.user.id, payload['id'])
+        self.assertEqual(self.user.email, payload['email'])
         self.assertEqual(res.status_code, status.HTTP_200_OK)
