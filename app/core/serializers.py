@@ -5,8 +5,10 @@ from django.contrib.auth import (
     get_user_model,
     authenticate
 )
+from core import models
 from django.utils.translation import gettext as _
 from rest_framework import serializers
+from core.utils import generate_unique_pin
 
 
 class AuthTokenSerializer(serializers.Serializer):
@@ -55,3 +57,17 @@ class UserSerializer(serializers.ModelSerializer):
                 user.set_password(password)
                 user.save()
             return user
+
+
+class PINGenerateRequestSerializer(serializers.Serializer):
+    pin_count = serializers.IntegerField(min_value=1)
+    pin_type = serializers.ChoiceField(
+        choices=[('teacher', 'Teacher'),('student', 'Student')]
+    )
+
+
+class PINSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.PIN
+        fields = ['id', 'pin_code', 'pin_type', 'is_used', 'used_by']
+        read_only_fields = ('id',)

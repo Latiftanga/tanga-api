@@ -5,7 +5,8 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin
 )
-import uuid
+from django.utils import timezone
+from datetime import timedelta
 
 
 class School(models.Model):
@@ -77,6 +78,7 @@ class UserManager(BaseUserManager):
     def create_adminuser(self, email, password):
         """Create and return a new admin user"""
         user = self.create_user(email, password)
+        user.is_staff = True
         user.is_admin = True
         user.save(using=self._db)
         return user
@@ -105,6 +107,10 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system"""
+    school = models.ForeignKey(
+        School, on_delete=models.CASCADE,
+        related_name='users', null=True, blank=True
+    )
     email = models.EmailField(max_length=32, unique=True)
     is_active = models.BooleanField(default=True)
     is_teacher = models.BooleanField(default=False)
@@ -120,20 +126,32 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class PIN(models.Model):
     PIN_TYPE_CHOICES = ( ('teacher', 'Teacher'), ('student', 'Student'), )
-    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    school = models.ForeignKey(
+        School, on_delete=models.CASCADE,
+        blank=True, null=True, related_name='pins'
+    )
     pin_code = models.CharField(max_length=10, unique=True)
     pin_type = models.CharField(max_length=7, choices=PIN_TYPE_CHOICES)
     is_used = models.BooleanField(default=False)
+    used_by = models.ForeignKey(
+        get_user_model(), on_delete=models.SET_NULL, null=True,
+        blank=True, related_name='used_pins'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    expire = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'Pin {self.pin_code} ({'Used' if self.is_used else 'Available'})'
+
+    def has_expired(self):
+        if self.expire:
+            return timezone.now() > self.expire
+        return False
 
     def save(self, *args, **kwargs):
-        if not self.pin_code:
-            self.pin_code = self.generate_unique_pin()
+        if not self.expire:
+            self.expire = timezone.now() + timedelta(days=30)
         super().save(*args, **kwargs)
-
-    @staticmethod
-    def generate_unique_pin():
-        return str(uuid.uuid4()).replace("-", "")[:10]
 
 
 class Teacher(Person):
@@ -184,7 +202,7 @@ class Lesson(models.Model):
     year = models.IntegerField()
 
     def __str__(self):
-        return f"{self.subject.name} - ({self.term} {self.year})"
+        return f'{self.subject.name} - ({self.term} {self.year})'
 
 
 class AssignmentType(models.Model):

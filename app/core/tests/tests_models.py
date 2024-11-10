@@ -4,12 +4,13 @@ Test for models
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from core import models
 
 
 class ModelTests(TestCase):
     """Test models"""
 
-    def test_create_user_with_id_successful(self):
+    def test_create_user_with_email_successful(self):
         """Test creating a user with an id is successful"""
 
         email = 'test@example.com'
@@ -35,3 +36,11 @@ class ModelTests(TestCase):
             'test@pass'
         )
         self.assertTrue(user.is_superuser)
+
+    def test_create_teacher_and_student_pins(self):
+        """Test create pin(s) for students and teachers"""
+        pin = models.PIN.objects.create(
+            pin_type='teacher'
+        )
+        print(pin.pin_code)
+        self.assertEqual(pin.pin_type, 'teacher')
